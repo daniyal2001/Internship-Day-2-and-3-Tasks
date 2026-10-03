@@ -1,45 +1,121 @@
-# AI Chatbot
+# Built and Deployed by Muhammad Daniyal
+# Nova AI — AI Chatbot
 
-## What I built
-A simple web chatbot. The user types a message, the Flask backend sends it to an AI model, and the reply is shown in the chat window.
+Nova AI is a web-based AI chatbot developed using Python, Flask, HTML, CSS, JavaScript, and the Groq API.
 
-Features: conversation history, system prompt, loading state, error handling, basic UI.
+The application allows users to interact with an AI assistant, maintain conversation history, and automatically generate short titles for conversations.
 
-## Technology used
-- Python 3, Flask (backend)
-- OpenAI Python SDK (works with any OpenAI-compatible API)
-- HTML, CSS and vanilla JavaScript (frontend)
-- python-dotenv for keeping the API key out of the code
+## Features
 
-## How to run
+* AI-powered chat responses
+* Groq API integration
+* Custom system prompt and assistant personality
+* Conversation history
+* Automatic AI-generated chat titles
+* Markdown response rendering
+* Loading indicators
+* Error handling
+* Input validation
+* API rate limiting
+* Voice input and output
+* Clear chat functionality
+* Responsive user interface
+* Health-check endpoint
+* Secure environment variable configuration
+
+## Technologies Used
+
+| Technology        | Purpose                           |
+| ----------------- | --------------------------------- |
+| Python            | Backend programming               |
+| Flask             | Web framework and API routes      |
+| Groq API          | AI response generation            |
+| HTML              | Application structure             |
+| CSS               | User interface styling            |
+| JavaScript        | Frontend functionality            |
+| OpenAI Python SDK | API communication                 |
+| Flask-Limiter     | Request rate limiting             |
+| python-dotenv     | Environment configuration         |
+| localStorage      | Browser-side conversation history |
+
+## Architecture
+
+User → Frontend → Flask Backend → Groq API → Flask Backend → Frontend
+
+## Installation
+
+1. Clone the repository:
+
 ```bash
-git clone <your-repo-url>
-cd ai-chatbot
+git clone https://github.com/daniyal2001/nova-ai-chatbot.git
+```
+
+2. Navigate to the project:
+
+```bash
+cd nova-ai-chatbot
+```
+
+3. Create and activate a virtual environment:
+
+```bash
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+```
+
+Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+4. Install dependencies:
+
+```bash
 pip install -r requirements.txt
-cp .env.example .env            # Windows: copy .env.example .env
-# open .env and paste your API key
+```
+
+5. Create a `.env` file using `.env.example` and configure your Groq API credentials.
+
+6. Run the application:
+
+```bash
 python app.py
 ```
-Open http://127.0.0.1:5000 in your browser.
 
-## API integration approach
-1. The browser sends the whole conversation (`messages`) to `POST /chat`.
-2. The server adds a system prompt at the start and calls `client.chat.completions.create(...)`.
-3. The model's reply is returned as JSON and displayed in the page.
-4. The server keeps no state. The browser holds the history and resends it each turn, which is how the model "remembers" the conversation.
-5. The API key is read from `.env` and `.env` is listed in `.gitignore`, so it is never committed.
-6. Errors (bad key, rate limit, network) are caught and shown in the chat.
+7. Open:
 
-## What I learned
-- [Write 2-3 points in your own words, e.g. how chat APIs are stateless and need the history each time]
+```text
+http://127.0.0.1:5000
+```
 
-## What I would improve next
-- Stream the response token by token
-- Render Markdown in replies
-- Save conversations in a database
-- Add voice input and output
+## API Endpoints
 
-## Demo
-[Add screenshot here]
+* `/` — Main chatbot interface
+* `/chat` — Processes user messages and returns AI responses
+* `/title` — Generates conversation titles
+* `/health` — Checks application status
+
+## Security
+
+* API credentials are stored in environment variables.
+* `.env` is excluded from Git.
+* User input is validated.
+* Request size and rate limits are configured.
+
+## What I Learned
+
+* Building a backend using Python and Flask
+* Integrating an external AI API
+* Handling JSON requests and responses
+* Managing conversation context
+* Implementing error handling and validation
+* Using environment variables
+* Developing an interactive frontend
+* Debugging API and deployment issues
+
+## Developer
+
+Muhammad Daniyal
+BS Artificial Intelligence Student
+
+Built as part of an AI Internship Project.
