@@ -24,34 +24,34 @@
         }
 
         .developer-credit {
-    margin-top: auto;
-    padding-top: 18px;
-}
+            margin-top: auto;
+            padding-top: 18px;
+        }
 
-.developer-credit-line {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.08);
-    margin-bottom: 14px;
-}
+        .developer-credit-line {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            margin-bottom: 14px;
+        }
 
-.developer-credit-text {
-    text-align: center;
-    color: #7d8491;
-    font-size: 11px;
-    line-height: 1.5;
-}
+        .developer-credit-text {
+            text-align: center;
+            color: #7d8491;
+            font-size: 11px;
+            line-height: 1.5;
+        }
 
-.developer-credit-text span {
-    display: block;
-}
+        .developer-credit-text span {
+            display: block;
+        }
 
-.developer-credit-text strong {
-    display: block;
-    color: #c8ccd4;
-    font-size: 12px;
-    font-weight: 600;
-    margin-top: 2px;
-}
+        .developer-credit-text strong {
+            display: block;
+            color: #c8ccd4;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
 
         /* =========================================
            APP
@@ -88,8 +88,6 @@
             gap: 11px;
             margin-bottom: 18px;
         }
-
-        /* Custom AI logo */
 
         .brand-logo {
             width: 39px;
@@ -326,8 +324,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 21px;
-            box-shadow:
-                0 15px 45px rgba(95, 90, 240, .22);
+            box-shadow: 0 15px 45px rgba(95, 90, 240, .22);
         }
 
         .welcome-logo svg {
@@ -700,8 +697,6 @@
 
                 <div class="brand-logo">
 
-                    <!-- Custom AI mark -->
-
                     <svg viewBox="0 0 32 32"
                          fill="none"
                          xmlns="http://www.w3.org/2000/svg">
@@ -729,7 +724,6 @@
 
             </div>
 
-
             <button class="new-chat" onclick="newChat()">
 
                 <svg viewBox="0 0 24 24"
@@ -747,34 +741,30 @@
 
         </div>
 
-
         <div class="history-title">
             Chat History
         </div>
 
-
         <div class="history-list" id="historyList"></div>
-
 
         <div class="sidebar-footer">
             Conversations are saved locally in your browser.
         </div>
 
-    <div class="developer-credit">
-    <div class="developer-credit-line"></div>
-    <div class="developer-credit-text">
-        <span>Built & deployed by</span>
-        <strong>Muhammad Daniyal</strong>
-    </div>
-</div>
+        <div class="developer-credit">
+            <div class="developer-credit-line"></div>
+
+            <div class="developer-credit-text">
+                <span>Built & deployed by</span>
+                <strong>Muhammad Daniyal</strong>
+            </div>
+        </div>
 
     </aside>
-         
 
     <div class="overlay"
          id="overlay"
          onclick="closeSidebar()"></div>
-
 
     <!-- MAIN -->
 
@@ -804,7 +794,6 @@
             </div>
 
         </header>
-
 
         <!-- CHAT -->
 
@@ -838,11 +827,9 @@
 
                     </div>
 
-
                     <h1>
                         How can I help you?
                     </h1>
-
 
                     <p>
                         Ask anything. Explore ideas,
@@ -856,7 +843,6 @@
 
         </section>
 
-
         <!-- INPUT -->
 
         <div class="input-area">
@@ -869,9 +855,6 @@
                         id="input"
                         placeholder="Message Nova AI..."
                         rows="1"></textarea>
-
-
-                    <!-- MIC -->
 
                     <button
                         class="icon-btn"
@@ -898,9 +881,6 @@
 
                     </button>
 
-
-                    <!-- SEND -->
-
                     <button
                         class="send-btn"
                         id="sendBtn"
@@ -920,7 +900,6 @@
 
                 </div>
 
-
                 <div class="input-footer">
                     Enter to send • Shift + Enter for new line • Voice enabled
                 </div>
@@ -933,1510 +912,1564 @@
 
 </div>
 
-
 <script>
 
-    /* =====================================================
-       STATE
-    ===================================================== */
+/* =====================================================
+   STATE
+===================================================== */
 
-    let conversations = JSON.parse(
-        localStorage.getItem("ai_chat_history") || "[]"
+let conversations = JSON.parse(
+    localStorage.getItem("ai_chat_history") || "[]"
+);
+
+let currentConversationId = null;
+let messages = [];
+let recognition = null;
+let isRecording = false;
+let currentSpeech = null;
+
+
+/* =====================================================
+   FIX OLD CONVERSATIONS
+===================================================== */
+
+conversations = conversations.map(conversation => {
+
+    if (
+        conversation.title === "New Conversation" ||
+        !conversation.title
+    ) {
+        conversation.title = "New Conversation";
+        conversation.titleGenerated = false;
+    }
+
+    if (
+        conversation.titleGenerating === undefined
+    ) {
+        conversation.titleGenerating = false;
+    }
+
+    return conversation;
+
+});
+
+localStorage.setItem(
+    "ai_chat_history",
+    JSON.stringify(conversations)
+);
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const chat = document.getElementById("chat");
+
+const chatInner =
+    document.getElementById("chatInner");
+
+const input =
+    document.getElementById("input");
+
+const sendBtn =
+    document.getElementById("sendBtn");
+
+const micBtn =
+    document.getElementById("micBtn");
+
+const historyList =
+    document.getElementById("historyList");
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+
+renderHistory();
+
+
+/* =====================================================
+   STORAGE
+===================================================== */
+
+function saveConversations() {
+
+    localStorage.setItem(
+        "ai_chat_history",
+        JSON.stringify(conversations)
     );
 
-    let currentConversationId = null;
+}
 
-    let messages = [];
 
-    let recognition = null;
+/* =====================================================
+   NEW CHAT
+===================================================== */
 
-    let isRecording = false;
+function newChat() {
 
-    let currentSpeech = null;
+    stopSpeaking();
 
+    currentConversationId = null;
 
-    /* =====================================================
-       ELEMENTS
-    ===================================================== */
+    messages = [];
 
-    const chat = document.getElementById("chat");
+    chatInner.innerHTML = `
 
-    const chatInner =
-        document.getElementById("chatInner");
+        <div class="welcome" id="welcome">
 
-    const input =
-        document.getElementById("input");
+            <div class="welcome-logo">
 
-    const sendBtn =
-        document.getElementById("sendBtn");
-
-    const micBtn =
-        document.getElementById("micBtn");
-
-    const historyList =
-        document.getElementById("historyList");
-
-
-    /* =====================================================
-       INITIALIZE
-    ===================================================== */
-
-    renderHistory();
-
-
-    /* =====================================================
-       STORAGE
-    ===================================================== */
-
-    function saveConversations() {
-
-        localStorage.setItem(
-            "ai_chat_history",
-            JSON.stringify(conversations)
-        );
-
-    }
-
-
-    /* =====================================================
-       NEW CHAT
-    ===================================================== */
-
-    function newChat() {
-
-        stopSpeaking();
-
-        currentConversationId = null;
-
-        messages = [];
-
-        chatInner.innerHTML = `
-
-            <div class="welcome"
-                 id="welcome">
-
-                <div class="welcome-logo">
-
-                    <svg viewBox="0 0 48 48"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-
-                        <path
-                            d="M24 7L27.6 18.4L39 22L27.6 25.6L24 37L20.4 25.6L9 22L20.4 18.4L24 7Z"
-                            stroke="white"
-                            stroke-width="2.3"
-                            stroke-linejoin="round"/>
-
-                        <circle
-                            cx="37"
-                            cy="10"
-                            r="2"
-                            fill="white"/>
-
-                    </svg>
-
-                </div>
-
-                <h1>How can I help you?</h1>
-
-                <p>
-                    Ask anything. Explore ideas,
-                    learn concepts, write code,
-                    analyze problems and more.
-                </p>
-
-            </div>
-
-        `;
-
-        renderHistory();
-
-        input.focus();
-
-        closeSidebar();
-
-    }
-
-
-    /* =====================================================
-       CREATE CONVERSATION
-    ===================================================== */
-
-    function createConversation() {
-
-        const conversation = {
-
-            id: Date.now(),
-
-            title: "New Conversation",
-
-            messages: [],
-
-            titleGenerated: false
-
-        };
-
-        conversations.unshift(conversation);
-
-        currentConversationId =
-            conversation.id;
-
-        saveConversations();
-
-        renderHistory();
-
-    }
-
-
-    /* =====================================================
-       GENERATE AI TITLE
-    ===================================================== */
-
-    async function generateChatTitle() {
-
-        if (!currentConversationId) {
-            return;
-        }
-
-
-        const conversation =
-            conversations.find(
-                c => c.id === currentConversationId
-            );
-
-
-        if (!conversation) {
-            return;
-        }
-
-
-        /*
-         * Need at least one meaningful user message.
-         */
-
-        const userMessages =
-            messages.filter(
-                m => m.role === "user"
-            );
-
-
-        if (userMessages.length === 0) {
-            return;
-        }
-
-
-        /*
-         * Don't waste an API call on "hi",
-         * "hello", etc.
-         */
-
-        const meaningful =
-            userMessages.find(
-                m => !isGreeting(m.content)
-            );
-
-
-        if (!meaningful) {
-            return;
-        }
-
-
-        /*
-         * We use the conversation itself to
-         * understand the actual topic.
-         */
-
-        const titleMessages =
-            messages.slice(-8);
-
-
-        try {
-
-            const response =
-                await fetch("/chat", {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        messages: [
-
-                            {
-                                role: "system",
-
-                                content: `
-You are a conversation title generator.
-
-Analyze the conversation and identify
-the MAIN topic being discussed.
-
-Return ONLY a short title.
-
-Rules:
-- Maximum 5 words.
-- Do not start with "Tell me".
-- Do not start with "Explain".
-- Do not start with "How do I".
-- Do not use question marks.
-- Do not include quotation marks.
-- Ignore greetings such as hi or hello.
-- Focus on the actual subject.
-- Make the title natural and professional.
-- Use title case.
-- Do not say "Chat", "Conversation", or "Discussion".
-
-Examples:
-
-User: hi
-User: tell me basics of IoT
-
-Output:
-Basics of IoT
-
-User: hello
-User: explain supervised learning
-
-Output:
-Supervised Learning
-
-User: help me understand Python lists
-
-Output:
-Python Lists
-
-User: what are CNNs and how are they used in image classification?
-
-Output:
-CNNs & Image Classification
-`
-                            },
-
-                            ...titleMessages
-
-                        ]
-
-                    })
-
-                });
-
-
-            const data =
-                await response.json();
-
-
-            if (!response.ok) {
-                return;
-            }
-
-
-            let title =
-                data.reply
-                    .trim()
-                    .replace(/^["']|["']$/g, "")
-                    .replace(/\n/g, " ");
-
-
-            /*
-             * Remove common command-style prefixes
-             */
-
-            title =
-                title
-                    .replace(
-                        /^(tell me|explain|show me|describe|what is|what are)\s+/i,
-                        ""
-                    );
-
-
-            /*
-             * Keep it short.
-             */
-
-            const words =
-                title.split(/\s+/);
-
-            if (words.length > 5) {
-
-                title =
-                    words.slice(0, 5).join(" ");
-
-            }
-
-
-            if (
-                title &&
-                !isGreeting(title)
-            ) {
-
-                conversation.title =
-                    title;
-
-                conversation.titleGenerated =
-                    true;
-
-                saveConversations();
-
-                renderHistory();
-
-            }
-
-        }
-
-        catch (error) {
-
-            console.log(
-                "Title generation failed:",
-                error
-            );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       GREETING DETECTION
-    ===================================================== */
-
-    function isGreeting(text) {
-
-        const value =
-            text
-                .toLowerCase()
-                .trim()
-                .replace(/[!.?,]/g, "");
-
-
-        const greetings = [
-
-            "hi",
-            "hello",
-            "hey",
-            "hi there",
-            "hello there",
-            "hey there",
-            "good morning",
-            "good afternoon",
-            "good evening"
-
-        ];
-
-
-        return greetings.includes(value);
-
-    }
-
-
-    /* =====================================================
-       SAVE CURRENT CHAT
-    ===================================================== */
-
-    function saveCurrentChat() {
-
-        if (!currentConversationId) {
-            return;
-        }
-
-
-        const conversation =
-            conversations.find(
-                c => c.id === currentConversationId
-            );
-
-
-        if (!conversation) {
-            return;
-        }
-
-
-        conversation.messages =
-            messages;
-
-
-        saveConversations();
-
-        renderHistory();
-
-    }
-
-
-    /* =====================================================
-       HISTORY
-    ===================================================== */
-
-    function renderHistory() {
-
-        historyList.innerHTML = "";
-
-
-        if (conversations.length === 0) {
-
-            historyList.innerHTML = `
-
-                <div style="
-                    color:#555b66;
-                    padding:15px;
-                    text-align:center;
-                    font-size:11px;
-                ">
-                    No conversations yet
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        conversations.forEach(
-            conversation => {
-
-                const item =
-                    document.createElement("div");
-
-
-                item.className =
-                    "history-item";
-
-
-                if (
-                    conversation.id ===
-                    currentConversationId
-                ) {
-
-                    item.classList.add("active");
-
-                }
-
-
-                const icon =
-                    document.createElement("div");
-
-                icon.className =
-                    "history-icon";
-
-
-                icon.innerHTML = `
-
-                    <svg viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="1.7">
-
-                        <path
-                            d="M20 11.5a7.5 7.5 0 01-7.5 7.5H7l-4 3 1.5-5A7.5 7.5 0 1112.5 19"/>
-
-                    </svg>
-
-                `;
-
-
-                const name =
-                    document.createElement("div");
-
-                name.className =
-                    "history-name";
-
-                name.textContent =
-                    conversation.title;
-
-
-                const deleteBtn =
-                    document.createElement("button");
-
-                deleteBtn.className =
-                    "delete-chat";
-
-                deleteBtn.title =
-                    "Delete conversation";
-
-
-                deleteBtn.innerHTML = `
-
-                    <svg viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="1.8">
-
-                        <path d="M3 6h18"/>
-                        <path d="M8 6V4h8v2"/>
-                        <path d="M19 6l-1 15H6L5 6"/>
-                        <path d="M10 11v6"/>
-                        <path d="M14 11v6"/>
-
-                    </svg>
-
-                `;
-
-
-                deleteBtn.onclick =
-                    function(event) {
-
-                        event.stopPropagation();
-
-                        deleteConversation(
-                            conversation.id
-                        );
-
-                    };
-
-
-                item.appendChild(icon);
-
-                item.appendChild(name);
-
-                item.appendChild(deleteBtn);
-
-
-                item.onclick =
-                    function() {
-
-                        loadConversation(
-                            conversation.id
-                        );
-
-                    };
-
-
-                historyList.appendChild(item);
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       LOAD CONVERSATION
-    ===================================================== */
-
-    function loadConversation(id) {
-
-        stopSpeaking();
-
-
-        const conversation =
-            conversations.find(
-                c => c.id === id
-            );
-
-
-        if (!conversation) {
-            return;
-        }
-
-
-        currentConversationId =
-            id;
-
-
-        messages =
-            [...conversation.messages];
-
-
-        chatInner.innerHTML = "";
-
-
-        if (messages.length === 0) {
-
-            newChat();
-
-            return;
-
-        }
-
-
-        messages.forEach(message => {
-
-            if (message.role === "user") {
-
-                addMessage(
-                    message.content,
-                    "user",
-                    false
-                );
-
-            }
-
-            else if (
-                message.role === "assistant"
-            ) {
-
-                addMessage(
-                    message.content,
-                    "bot",
-                    true
-                );
-
-            }
-
-        });
-
-
-        renderHistory();
-
-        closeSidebar();
-
-        input.focus();
-
-    }
-
-
-    /* =====================================================
-       DELETE
-    ===================================================== */
-
-    function deleteConversation(id) {
-
-        conversations =
-            conversations.filter(
-                c => c.id !== id
-            );
-
-
-        saveConversations();
-
-
-        if (
-            currentConversationId === id
-        ) {
-
-            newChat();
-
-        }
-
-        else {
-
-            renderHistory();
-
-        }
-
-    }
-
-
-    /* =====================================================
-       ADD MESSAGE
-    ===================================================== */
-
-    function addMessage(
-        text,
-        type,
-        markdown = false
-    ) {
-
-        const message =
-            document.createElement("div");
-
-
-        message.className =
-            "message " +
-            (
-                type === "user"
-                    ? "user-message"
-                    : "bot-message"
-            );
-
-
-        const avatar =
-            document.createElement("div");
-
-
-        avatar.className =
-            "avatar " +
-            (
-                type === "user"
-                    ? "user-avatar"
-                    : "bot-avatar"
-            );
-
-
-        if (type === "user") {
-
-            avatar.innerHTML = `
-
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7">
-
-                    <circle cx="12" cy="8" r="3.5"/>
-                    <path d="M5 20a7 7 0 0114 0"/>
-
-                </svg>
-
-            `;
-
-        }
-
-        else {
-
-            avatar.innerHTML = `
-
-                <svg viewBox="0 0 32 32"
+                <svg viewBox="0 0 48 48"
                      fill="none"
                      xmlns="http://www.w3.org/2000/svg">
 
                     <path
-                        d="M16 5L18.4 12.1L25.5 14.5L18.4 16.9L16 24L13.6 16.9L6.5 14.5L13.6 12.1L16 5Z"
+                        d="M24 7L27.6 18.4L39 22L27.6 25.6L24 37L20.4 25.6L9 22L20.4 18.4L24 7Z"
                         stroke="white"
-                        stroke-width="1.8"
+                        stroke-width="2.3"
                         stroke-linejoin="round"/>
 
                     <circle
-                        cx="24.5"
-                        cy="7.5"
-                        r="1.5"
-                        fill="white"/>
-
-                </svg>
-
-            `;
-
-        }
-
-
-        const content =
-            document.createElement("div");
-
-
-        content.className =
-            "message-content";
-
-
-        if (markdown) {
-
-            content.innerHTML =
-                marked.parse(text);
-
-        }
-
-        else {
-
-            content.textContent =
-                text;
-
-        }
-
-
-        message.appendChild(avatar);
-
-        message.appendChild(content);
-
-
-        /*
-         * AI voice controls
-         */
-
-        if (type === "bot") {
-
-            const actions =
-                document.createElement("div");
-
-
-            actions.className =
-                "message-actions";
-
-
-            const speakBtn =
-                document.createElement("button");
-
-
-            speakBtn.className =
-                "action-btn";
-
-
-            speakBtn.innerHTML = `
-
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7">
-
-                    <path d="M11 5L6 9H3v6h3l5 4V5z"/>
-                    <path d="M15 9a4 4 0 010 6"/>
-                    <path d="M18 6a8 8 0 010 12"/>
-
-                </svg>
-
-                Read aloud
-
-            `;
-
-
-            speakBtn.onclick =
-                function() {
-
-                    speakText(text);
-
-                };
-
-
-            const stopBtn =
-                document.createElement("button");
-
-
-            stopBtn.className =
-                "action-btn";
-
-
-            stopBtn.innerHTML = `
-
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7">
-
-                    <rect
-                        x="6"
-                        y="6"
-                        width="12"
-                        height="12"
-                        rx="2"/>
-
-                </svg>
-
-                Stop
-
-            `;
-
-
-            stopBtn.onclick =
-                stopSpeaking;
-
-
-            actions.appendChild(speakBtn);
-
-            actions.appendChild(stopBtn);
-
-            content.appendChild(actions);
-
-        }
-
-
-        chatInner.appendChild(message);
-
-        chat.scrollTop =
-            chat.scrollHeight;
-
-
-        return message;
-
-    }
-
-
-    /* =====================================================
-       TYPING
-    ===================================================== */
-
-    function showTyping() {
-
-        const message =
-            document.createElement("div");
-
-
-        message.className =
-            "message bot-message";
-
-
-        message.id =
-            "typingMessage";
-
-
-        message.innerHTML = `
-
-            <div class="avatar bot-avatar">
-
-                <svg viewBox="0 0 32 32"
-                     fill="none">
-
-                    <path
-                        d="M16 5L18.4 12.1L25.5 14.5L18.4 16.9L16 24L13.6 16.9L6.5 14.5L13.6 12.1L16 5Z"
-                        stroke="white"
-                        stroke-width="1.8"
-                        stroke-linejoin="round"/>
-
-                    <circle
-                        cx="24.5"
-                        cy="7.5"
-                        r="1.5"
+                        cx="37"
+                        cy="10"
+                        r="2"
                         fill="white"/>
 
                 </svg>
 
             </div>
 
-            <div class="message-content">
+            <h1>How can I help you?</h1>
 
-                <div class="typing">
+            <p>
+                Ask anything. Explore ideas,
+                learn concepts, write code,
+                analyze problems and more.
+            </p>
 
-                    <span></span>
-                    <span></span>
-                    <span></span>
+        </div>
 
-                </div>
+    `;
 
+    renderHistory();
+
+    input.focus();
+
+    closeSidebar();
+
+}
+
+
+/* =====================================================
+   CREATE CONVERSATION
+===================================================== */
+
+function createConversation() {
+
+    const conversation = {
+
+        id: Date.now(),
+
+        title: "New Conversation",
+
+        messages: [],
+
+        titleGenerated: false,
+
+        titleGenerating: false
+
+    };
+
+    conversations.unshift(conversation);
+
+    currentConversationId =
+        conversation.id;
+
+    saveConversations();
+
+    renderHistory();
+
+    return conversation;
+
+}
+
+
+/* =====================================================
+   GET CURRENT CONVERSATION
+===================================================== */
+
+function getCurrentConversation() {
+
+    return conversations.find(
+        conversation =>
+            conversation.id === currentConversationId
+    );
+
+}
+
+
+/* =====================================================
+   GREETING DETECTION
+===================================================== */
+
+function isGreeting(text) {
+
+    const value =
+        text
+            .toLowerCase()
+            .trim()
+            .replace(/[!.?,]/g, "");
+
+    const greetings = [
+
+        "hi",
+        "hello",
+        "hey",
+        "hi there",
+        "hello there",
+        "hey there",
+        "good morning",
+        "good afternoon",
+        "good evening"
+
+    ];
+
+    return greetings.includes(value);
+
+}
+
+
+/* =====================================================
+   GENERATE AI TITLE
+===================================================== */
+
+async function generateChatTitle() {
+
+    const conversation =
+        getCurrentConversation();
+
+    if (!conversation) {
+        return;
+    }
+
+
+    /*
+     * Do not generate again if a real title
+     * already exists.
+     */
+
+    if (
+        conversation.titleGenerated &&
+        conversation.title &&
+        conversation.title !== "New Conversation"
+    ) {
+        return;
+    }
+
+
+    /*
+     * Prevent duplicate title requests.
+     */
+
+    if (conversation.titleGenerating) {
+        return;
+    }
+
+
+    /*
+     * Make sure there is an actual topic.
+     */
+
+    const userMessages =
+        conversation.messages.filter(
+            message =>
+                message.role === "user" &&
+                typeof message.content === "string" &&
+                message.content.trim() &&
+                !isGreeting(message.content)
+        );
+
+
+    if (userMessages.length === 0) {
+        return;
+    }
+
+
+    conversation.titleGenerating = true;
+
+
+    try {
+
+        const response =
+            await fetch("/title", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    messages:
+                        conversation.messages
+
+                })
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "Title generation failed."
+            );
+
+        }
+
+
+        let title =
+            data.title;
+
+
+        if (
+            typeof title !== "string" ||
+            !title.trim()
+        ) {
+
+            throw new Error(
+                "AI returned an empty title."
+            );
+
+        }
+
+
+        /*
+         * Clean title returned by AI.
+         */
+
+        title =
+            title
+                .trim()
+                .replace(/^["']|["']$/g, "")
+                .replace(/\n/g, " ")
+                .replace(/[?.!]+$/g, "");
+
+
+        /*
+         * Remove common AI prefixes.
+         */
+
+        const unwantedPrefixes = [
+
+            "Tell Me ",
+            "Explain ",
+            "How Do I ",
+            "What Is ",
+            "What Are ",
+            "Show Me ",
+            "Help Me "
+
+        ];
+
+
+        for (
+            const prefix of unwantedPrefixes
+        ) {
+
+            if (
+                title
+                    .toLowerCase()
+                    .startsWith(
+                        prefix.toLowerCase()
+                    )
+            ) {
+
+                title =
+                    title
+                        .substring(prefix.length)
+                        .trim();
+
+                break;
+
+            }
+
+        }
+
+
+        /*
+         * Maximum 5 words.
+         */
+
+        const words =
+            title.split(/\s+/);
+
+        if (words.length > 5) {
+
+            title =
+                words
+                    .slice(0, 5)
+                    .join(" ");
+
+        }
+
+
+        /*
+         * Only accept a real title.
+         */
+
+        if (
+            title &&
+            !isGreeting(title) &&
+            title.toLowerCase() !==
+                "new conversation"
+        ) {
+
+            conversation.title =
+                title;
+
+            conversation.titleGenerated =
+                true;
+
+            conversation.titleGenerating =
+                false;
+
+            saveConversations();
+
+            renderHistory();
+
+        }
+        else {
+
+            conversation.titleGenerating =
+                false;
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Title generation error:",
+            error
+        );
+
+        conversation.titleGenerating =
+            false;
+
+        /*
+         * Do NOT mark the title as generated.
+         * This allows another attempt later.
+         */
+
+        saveConversations();
+
+    }
+
+}
+
+
+/* =====================================================
+   SAVE CURRENT CHAT
+===================================================== */
+
+function saveCurrentChat() {
+
+    const conversation =
+        getCurrentConversation();
+
+    if (!conversation) {
+        return;
+    }
+
+    conversation.messages =
+        [...messages];
+
+    saveConversations();
+
+    renderHistory();
+
+}
+
+
+/* =====================================================
+   HISTORY
+===================================================== */
+
+function renderHistory() {
+
+    historyList.innerHTML = "";
+
+
+    if (conversations.length === 0) {
+
+        historyList.innerHTML = `
+
+            <div style="
+                color:#555b66;
+                padding:15px;
+                text-align:center;
+                font-size:11px;
+            ">
+                No conversations yet
             </div>
 
         `;
 
-
-        chatInner.appendChild(message);
-
-        chat.scrollTop =
-            chat.scrollHeight;
+        return;
 
     }
 
 
-    function removeTyping() {
+    conversations.forEach(
+        conversation => {
 
-        const typing =
-            document.getElementById(
-                "typingMessage"
-            );
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "history-item";
 
 
-        if (typing) {
-            typing.remove();
+            if (
+                conversation.id ===
+                currentConversationId
+            ) {
+
+                item.classList.add("active");
+
+            }
+
+
+            const icon =
+                document.createElement("div");
+
+            icon.className =
+                "history-icon";
+
+            icon.innerHTML = `
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7">
+
+                    <path
+                        d="M20 11.5a7.5 7.5 0 01-7.5 7.5H7l-4 3 1.5-5A7.5 7.5 0 1112.5 19"/>
+
+                </svg>
+
+            `;
+
+
+            const name =
+                document.createElement("div");
+
+            name.className =
+                "history-name";
+
+            name.textContent =
+                conversation.title ||
+                "New Conversation";
+
+
+            const deleteBtn =
+                document.createElement("button");
+
+            deleteBtn.className =
+                "delete-chat";
+
+            deleteBtn.title =
+                "Delete conversation";
+
+            deleteBtn.innerHTML = `
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+
+                    <path d="M3 6h18"/>
+                    <path d="M8 6V4h8v2"/>
+                    <path d="M19 6l-1 15H6L5 6"/>
+                    <path d="M10 11v6"/>
+                    <path d="M14 11v6"/>
+
+                </svg>
+
+            `;
+
+
+            deleteBtn.onclick =
+                function(event) {
+
+                    event.stopPropagation();
+
+                    deleteConversation(
+                        conversation.id
+                    );
+
+                };
+
+
+            item.appendChild(icon);
+
+            item.appendChild(name);
+
+            item.appendChild(deleteBtn);
+
+
+            item.onclick =
+                function() {
+
+                    loadConversation(
+                        conversation.id
+                    );
+
+                };
+
+
+            historyList.appendChild(item);
+
         }
+    );
+
+}
+
+
+/* =====================================================
+   LOAD CONVERSATION
+===================================================== */
+
+function loadConversation(id) {
+
+    stopSpeaking();
+
+    const conversation =
+        conversations.find(
+            c => c.id === id
+        );
+
+    if (!conversation) {
+        return;
+    }
+
+
+    currentConversationId =
+        id;
+
+    messages =
+        [...conversation.messages];
+
+
+    chatInner.innerHTML = "";
+
+
+    if (messages.length === 0) {
+
+        newChat();
+
+        return;
 
     }
 
 
-    /* =====================================================
-       SEND MESSAGE
-    ===================================================== */
+    messages.forEach(message => {
 
-    async function sendMessage() {
+        if (message.role === "user") {
 
-        const text =
-            input.value.trim();
-
-
-        if (!text) {
-            return;
-        }
-
-
-        stopSpeaking();
-
-
-        const welcomeScreen =
-            document.getElementById(
-                "welcome"
+            addMessage(
+                message.content,
+                "user",
+                false
             );
 
+        }
 
-        if (welcomeScreen) {
-            welcomeScreen.remove();
+        else if (
+            message.role === "assistant"
+        ) {
+
+            addMessage(
+                message.content,
+                "bot",
+                true
+            );
+
+        }
+
+    });
+
+
+    renderHistory();
+
+    closeSidebar();
+
+    input.focus();
+
+}
+
+
+/* =====================================================
+   DELETE
+===================================================== */
+
+function deleteConversation(id) {
+
+    conversations =
+        conversations.filter(
+            c => c.id !== id
+        );
+
+    saveConversations();
+
+
+    if (
+        currentConversationId === id
+    ) {
+
+        newChat();
+
+    }
+    else {
+
+        renderHistory();
+
+    }
+
+}
+
+
+/* =====================================================
+   ADD MESSAGE
+===================================================== */
+
+function addMessage(
+    text,
+    type,
+    markdown = false
+) {
+
+    const message =
+        document.createElement("div");
+
+    message.className =
+        "message " +
+        (
+            type === "user"
+                ? "user-message"
+                : "bot-message"
+        );
+
+
+    const avatar =
+        document.createElement("div");
+
+    avatar.className =
+        "avatar " +
+        (
+            type === "user"
+                ? "user-avatar"
+                : "bot-avatar"
+        );
+
+
+    if (type === "user") {
+
+        avatar.innerHTML = `
+
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.7">
+
+                <circle cx="12" cy="8" r="3.5"/>
+                <path d="M5 20a7 7 0 0114 0"/>
+
+            </svg>
+
+        `;
+
+    }
+
+    else {
+
+        avatar.innerHTML = `
+
+            <svg viewBox="0 0 32 32"
+                 fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+
+                <path
+                    d="M16 5L18.4 12.1L25.5 14.5L18.4 16.9L16 24L13.6 16.9L6.5 14.5L13.6 12.1L16 5Z"
+                    stroke="white"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"/>
+
+                <circle
+                    cx="24.5"
+                    cy="7.5"
+                    r="1.5"
+                    fill="white"/>
+
+            </svg>
+
+        `;
+
+    }
+
+
+    const content =
+        document.createElement("div");
+
+    content.className =
+        "message-content";
+
+
+    if (markdown) {
+
+        content.innerHTML =
+            marked.parse(text);
+
+    }
+    else {
+
+        content.textContent =
+            text;
+
+    }
+
+
+    message.appendChild(avatar);
+
+    message.appendChild(content);
+
+
+    if (type === "bot") {
+
+        const actions =
+            document.createElement("div");
+
+        actions.className =
+            "message-actions";
+
+
+        const speakBtn =
+            document.createElement("button");
+
+        speakBtn.className =
+            "action-btn";
+
+        speakBtn.innerHTML = `
+
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.7">
+
+                <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+                <path d="M15 9a4 4 0 010 6"/>
+                <path d="M18 6a8 8 0 010 12"/>
+
+            </svg>
+
+            Read aloud
+
+        `;
+
+
+        speakBtn.onclick =
+            function() {
+
+                speakText(text);
+
+            };
+
+
+        const stopBtn =
+            document.createElement("button");
+
+        stopBtn.className =
+            "action-btn";
+
+        stopBtn.innerHTML = `
+
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.7">
+
+                <rect
+                    x="6"
+                    y="6"
+                    width="12"
+                    height="12"
+                    rx="2"/>
+
+            </svg>
+
+            Stop
+
+        `;
+
+
+        stopBtn.onclick =
+            stopSpeaking;
+
+
+        actions.appendChild(
+            speakBtn
+        );
+
+        actions.appendChild(
+            stopBtn
+        );
+
+        content.appendChild(
+            actions
+        );
+
+    }
+
+
+    chatInner.appendChild(message);
+
+    chat.scrollTop =
+        chat.scrollHeight;
+
+
+    return message;
+
+}
+
+
+/* =====================================================
+   TYPING
+===================================================== */
+
+function showTyping() {
+
+    const message =
+        document.createElement("div");
+
+    message.className =
+        "message bot-message";
+
+    message.id =
+        "typingMessage";
+
+
+    message.innerHTML = `
+
+        <div class="avatar bot-avatar">
+
+            <svg viewBox="0 0 32 32"
+                 fill="none">
+
+                <path
+                    d="M16 5L18.4 12.1L25.5 14.5L18.4 16.9L16 24L13.6 16.9L6.5 14.5L13.6 12.1L16 5Z"
+                    stroke="white"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"/>
+
+                <circle
+                    cx="24.5"
+                    cy="7.5"
+                    r="1.5"
+                    fill="white"/>
+
+            </svg>
+
+        </div>
+
+        <div class="message-content">
+
+            <div class="typing">
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    chatInner.appendChild(message);
+
+    chat.scrollTop =
+        chat.scrollHeight;
+
+}
+
+
+function removeTyping() {
+
+    const typing =
+        document.getElementById(
+            "typingMessage"
+        );
+
+    if (typing) {
+        typing.remove();
+    }
+
+}
+
+
+/* =====================================================
+   SEND MESSAGE
+===================================================== */
+
+async function sendMessage() {
+
+    const text =
+        input.value.trim();
+
+
+    if (!text) {
+        return;
+    }
+
+
+    stopSpeaking();
+
+
+    const welcomeScreen =
+        document.getElementById(
+            "welcome"
+        );
+
+
+    if (welcomeScreen) {
+        welcomeScreen.remove();
+    }
+
+
+    /*
+     * Create conversation before
+     * adding the first message.
+     */
+
+    if (!currentConversationId) {
+
+        createConversation();
+
+    }
+
+
+    messages.push({
+
+        role: "user",
+
+        content: text
+
+    });
+
+
+    saveCurrentChat();
+
+
+    addMessage(
+        text,
+        "user",
+        false
+    );
+
+
+    input.value = "";
+
+    input.style.height = "42px";
+
+
+    sendBtn.disabled = true;
+
+    input.disabled = true;
+
+    micBtn.disabled = true;
+
+
+    showTyping();
+
+
+    try {
+
+        const response =
+            await fetch("/chat", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    messages:
+                        messages
+
+                })
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        removeTyping();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "AI request failed."
+            );
+
         }
 
 
-        /*
-         * Create conversation
-         * before adding first message.
-         */
+        const reply =
+            data.reply;
 
-        if (!currentConversationId) {
 
-            createConversation();
+        if (
+            typeof reply !== "string" ||
+            !reply.trim()
+        ) {
+
+            throw new Error(
+                "AI returned an empty response."
+            );
 
         }
 
 
         messages.push({
 
-            role: "user",
+            role: "assistant",
 
-            content: text
+            content: reply
 
         });
 
 
         addMessage(
-            text,
-            "user",
-            false
+            reply,
+            "bot",
+            true
         );
 
 
-        input.value = "";
+        /*
+         * Save complete conversation.
+         */
 
-        input.style.height = "42px";
-
-
-        sendBtn.disabled = true;
-
-        input.disabled = true;
-
-        micBtn.disabled = true;
+        saveCurrentChat();
 
 
-        showTyping();
+        /*
+         * Generate AI title.
+         */
+
+        const conversation =
+            getCurrentConversation();
 
 
-        try {
+        if (
+            conversation &&
+            !conversation.titleGenerated &&
+            !conversation.titleGenerating
+        ) {
 
-            const response =
-                await fetch("/chat", {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        messages:
-                            messages
-
-                    })
-
-                });
-
-
-            const data =
-                await response.json();
-
-
-            removeTyping();
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.error ||
-                    "AI request failed."
-                );
-
-            }
-
-
-            const reply =
-                data.reply;
-
-
-            messages.push({
-
-                role: "assistant",
-
-                content: reply
-
-            });
-
-
-            addMessage(
-                reply,
-                "bot",
-                true
-            );
-
-
-            saveCurrentChat();
-
-
-            /*
-             * Generate topic title after
-             * the AI has responded.
-             *
-             * We wait until there is enough
-             * meaningful context.
-             */
-
-            if (
-                !isGreeting(text) ||
-                messages.length >= 4
-            ) {
-
-                generateChatTitle();
-
-            }
+            generateChatTitle();
 
         }
 
-        catch (error) {
+    }
 
-            removeTyping();
+    catch (error) {
 
-
-            const errorBox =
-                document.createElement("div");
+        removeTyping();
 
 
-            errorBox.className =
-                "message";
+        const errorBox =
+            document.createElement("div");
+
+        errorBox.className =
+            "message";
 
 
-            errorBox.innerHTML = `
+        errorBox.innerHTML = `
 
-                <div class="avatar">
+            <div class="avatar">
+                ⚠️
+            </div>
 
-                    ⚠️
+            <div class="message-content">
 
+                <div class="error-message">
+                    ${escapeHtml(
+                        error.message
+                    )}
                 </div>
 
-                <div class="message-content">
+            </div>
 
-                    <div class="error-message">
-                        ${escapeHtml(
-                            error.message
-                        )}
-                    </div>
-
-                </div>
-
-            `;
+        `;
 
 
-            chatInner.appendChild(
-                errorBox
-            );
+        chatInner.appendChild(
+            errorBox
+        );
 
 
-            chat.scrollTop =
-                chat.scrollHeight;
+        chat.scrollTop =
+            chat.scrollHeight;
 
 
-            /*
-             * Remove failed user message.
-             */
+        /*
+         * Remove failed user message.
+         */
+
+        if (
+            messages.length > 0 &&
+            messages[messages.length - 1].role ===
+                "user"
+        ) {
 
             messages.pop();
 
         }
 
 
-        sendBtn.disabled = false;
-
-        input.disabled = false;
-
-        micBtn.disabled = false;
-
-        input.focus();
+        saveCurrentChat();
 
     }
 
 
-    /* =====================================================
-       ESCAPE HTML
-    ===================================================== */
+    sendBtn.disabled = false;
 
-    function escapeHtml(text) {
+    input.disabled = false;
 
-        const div =
-            document.createElement("div");
+    micBtn.disabled = false;
 
-        div.textContent =
-            text;
+    input.focus();
 
-        return div.innerHTML;
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+
+}
+
+
+/* =====================================================
+   KEYBOARD
+===================================================== */
+
+input.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+
+            event.preventDefault();
+
+            sendMessage();
+
+        }
 
     }
+);
 
 
-    /* =====================================================
-       KEYBOARD
-    ===================================================== */
+/* =====================================================
+   AUTO RESIZE
+===================================================== */
 
-    input.addEventListener(
-        "keydown",
+input.addEventListener(
+    "input",
+    function() {
+
+        this.style.height =
+            "42px";
+
+        this.style.height =
+            Math.min(
+                this.scrollHeight,
+                150
+            ) + "px";
+
+    }
+);
+
+
+/* =====================================================
+   VOICE INPUT
+===================================================== */
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+if (SpeechRecognition) {
+
+    recognition =
+        new SpeechRecognition();
+
+    recognition.continuous =
+        false;
+
+    recognition.interimResults =
+        true;
+
+    recognition.lang =
+        "en-US";
+
+
+    recognition.onstart =
+        function() {
+
+            isRecording =
+                true;
+
+            micBtn.classList.add(
+                "recording"
+            );
+
+            input.placeholder =
+                "Listening...";
+
+        };
+
+
+    recognition.onresult =
         function(event) {
 
-            if (
-                event.key === "Enter" &&
-                !event.shiftKey
+            let transcript =
+                "";
+
+            for (
+                let i =
+                    event.resultIndex;
+
+                i <
+                event.results.length;
+
+                i++
             ) {
 
-                event.preventDefault();
-
-                sendMessage();
+                transcript +=
+                    event.results[i][0]
+                        .transcript;
 
             }
 
-        }
-    );
+
+            input.value =
+                transcript;
 
 
-    /* =====================================================
-       AUTO RESIZE
-    ===================================================== */
+            input.dispatchEvent(
+                new Event("input")
+            );
 
-    input.addEventListener(
-        "input",
+        };
+
+
+    recognition.onerror =
+        function(event) {
+
+            console.log(
+                "Speech recognition error:",
+                event.error
+            );
+
+        };
+
+
+    recognition.onend =
         function() {
 
-            this.style.height =
-                "42px";
+            isRecording =
+                false;
 
-
-            this.style.height =
-                Math.min(
-                    this.scrollHeight,
-                    150
-                ) + "px";
-
-        }
-    );
-
-
-    /* =====================================================
-       VOICE INPUT
-    ===================================================== */
-
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-
-    if (SpeechRecognition) {
-
-        recognition =
-            new SpeechRecognition();
-
-
-        recognition.continuous =
-            false;
-
-
-        recognition.interimResults =
-            true;
-
-
-        recognition.lang =
-            "en-US";
-
-
-        recognition.onstart =
-            function() {
-
-                isRecording =
-                    true;
-
-
-                micBtn.classList.add(
-                    "recording"
-                );
-
-
-                input.placeholder =
-                    "Listening...";
-
-            };
-
-
-        recognition.onresult =
-            function(event) {
-
-                let transcript =
-                    "";
-
-
-                for (
-                    let i =
-                        event.resultIndex;
-
-                    i <
-                        event.results.length;
-
-                    i++
-                ) {
-
-                    transcript +=
-                        event.results[i][0]
-                            .transcript;
-
-                }
-
-
-                input.value =
-                    transcript;
-
-
-                input.dispatchEvent(
-                    new Event("input")
-                );
-
-            };
-
-
-        recognition.onerror =
-            function(event) {
-
-                console.log(
-                    "Speech recognition error:",
-                    event.error
-                );
-
-            };
-
-
-        recognition.onend =
-            function() {
-
-                isRecording =
-                    false;
-
-
-                micBtn.classList.remove(
-                    "recording"
-                );
-
-
-                input.placeholder =
-                    "Message Nova AI...";
-
-            };
-
-    }
-
-
-    function toggleVoice() {
-
-        if (!recognition) {
-
-            alert(
-                "Voice input is not supported in this browser. Try Google Chrome."
+            micBtn.classList.remove(
+                "recording"
             );
 
-            return;
+            input.placeholder =
+                "Message Nova AI...";
 
-        }
+        };
 
-
-        if (isRecording) {
-
-            recognition.stop();
-
-        }
-
-        else {
-
-            recognition.start();
-
-        }
-
-    }
+}
 
 
-    /* =====================================================
-       VOICE OUTPUT
-    ===================================================== */
+function toggleVoice() {
 
-    function speakText(text) {
+    if (!recognition) {
 
-        if (
-            !("speechSynthesis" in window)
-        ) {
-
-            alert(
-                "Voice output is not supported by this browser."
-            );
-
-            return;
-
-        }
-
-
-        stopSpeaking();
-
-
-        const cleanText =
-            text
-                .replace(
-                    /```[\s\S]*?```/g,
-                    " code "
-                )
-                .replace(
-                    /[*_#>`]/g,
-                    ""
-                )
-                .replace(
-                    /\[([^\]]+)\]\([^)]+\)/g,
-                    "$1"
-                );
-
-
-        currentSpeech =
-            new SpeechSynthesisUtterance(
-                cleanText
-            );
-
-
-        currentSpeech.lang =
-            "en-US";
-
-
-        currentSpeech.rate =
-            1;
-
-
-        currentSpeech.pitch =
-            1;
-
-
-        window.speechSynthesis.speak(
-            currentSpeech
+        alert(
+            "Voice input is not supported in this browser. Try Google Chrome."
         );
 
-    }
-
-
-    function stopSpeaking() {
-
-        if (
-            "speechSynthesis"
-            in window
-        ) {
-
-            window.speechSynthesis.cancel();
-
-        }
-
-
-        currentSpeech =
-            null;
+        return;
 
     }
 
 
-    /* =====================================================
-       MOBILE SIDEBAR
-    ===================================================== */
+    if (isRecording) {
 
-    function openSidebar() {
+        recognition.stop();
 
-        document
-            .getElementById("sidebar")
-            .classList.add("open");
+    }
+
+    else {
+
+        recognition.start();
+
+    }
+
+}
 
 
-        document
-            .getElementById("overlay")
-            .classList.add("show");
+/* =====================================================
+   VOICE OUTPUT
+===================================================== */
+
+function speakText(text) {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+
+        alert(
+            "Voice output is not supported by this browser."
+        );
+
+        return;
 
     }
 
 
-    function closeSidebar() {
-
-        document
-            .getElementById("sidebar")
-            .classList.remove("open");
+    stopSpeaking();
 
 
-        document
-            .getElementById("overlay")
-            .classList.remove("show");
+    const cleanText =
+        text
+            .replace(
+                /```[\s\S]*?```/g,
+                " code "
+            )
+            .replace(
+                /[*_#>`]/g,
+                ""
+            )
+            .replace(
+                /\[([^\]]+)\]\([^)]+\)/g,
+                "$1"
+            );
+
+
+    currentSpeech =
+        new SpeechSynthesisUtterance(
+            cleanText
+        );
+
+
+    currentSpeech.lang =
+        "en-US";
+
+    currentSpeech.rate =
+        1;
+
+    currentSpeech.pitch =
+        1;
+
+
+    window.speechSynthesis.speak(
+        currentSpeech
+    );
+
+}
+
+
+function stopSpeaking() {
+
+    if (
+        "speechSynthesis"
+        in window
+    ) {
+
+        window.speechSynthesis.cancel();
 
     }
+
+    currentSpeech =
+        null;
+
+}
+
+
+/* =====================================================
+   MOBILE SIDEBAR
+===================================================== */
+
+function openSidebar() {
+
+    document
+        .getElementById("sidebar")
+        .classList.add("open");
+
+
+    document
+        .getElementById("overlay")
+        .classList.add("show");
+
+}
+
+
+function closeSidebar() {
+
+    document
+        .getElementById("sidebar")
+        .classList.remove("open");
+
+
+    document
+        .getElementById("overlay")
+        .classList.remove("show");
+
+}
 
 </script>
 
